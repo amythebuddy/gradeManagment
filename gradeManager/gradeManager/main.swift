@@ -14,10 +14,12 @@ var studentGrades: [[String]] = []
 var sumOfClass = 0.0
 var sumToCalculateAverage = 0.0
 var average = 0.0
-var studentsWithGrades: [String : Double] = [:]
+var studentsWithGrades = [String : Double]()
+var sumOfEachStudent = 0.0
+
 
 do {
-    let stream = InputStream(fileAtPath: "/Users/studentam/Desktop/grades.csv")
+    let stream = InputStream(fileAtPath: "/Users/nguyenhuyen/Desktop/grades.csv")
     
     let csv = try CSVReader(stream: stream!)
     
@@ -27,7 +29,26 @@ do {
 } catch {
     print("There is a error trying read the files. Check if the file path is correct")
 }
-
+func calculateGradeOfEachStudent(){
+    for i in studentGrades.indices {
+        for j in 1..<studentGrades[i].count{
+            if let gradeOfEachAssignment = Double(studentGrades[i][j]){
+                sumOfEachStudent += gradeOfEachAssignment
+            }
+        }
+        var averageOfSingleStudent = sumOfEachStudent / 10
+        studentsWithGrades[studentGrades[i][0]] = averageOfSingleStudent
+    }
+}
+func findStudent(byName name : String) -> [String]? {
+    let lowercaseName = name.lowercased()
+    for student in studentGrades {
+        if let foundedStudent = student.firstIndex(where: {$0.lowercased() == lowercaseName}) {
+            return student
+        }
+    }
+    return nil
+}
 func showMainMenu(){
     while menuRunning {
         print("Welcome to the Grade Manager!\n"
@@ -46,17 +67,22 @@ func showMainMenu(){
             switch userInput{
                 case "1", "2":
                     print("Which student would you like to choose?")
+                    if let nameInput = readLine(), let studentName = findStudent(byName: nameInput){
+                        
+                    }
                 case "3":
                     showAllGradesOfAllStudents()
                 case "4":
                     for i in studentGrades.indices{
                         for j in 1..<studentGrades[i].count{
-                            sumOfClass += Double(studentGrades[i][j])!
+                            if let gradeOfEachAssignment = Double(studentGrades[i][j]){
+                                sumOfClass += gradeOfEachAssignment
+                            }
                             sumToCalculateAverage += 1
                         }
                     }
                     average = sumOfClass / sumToCalculateAverage
-                print("The class average is: " + String(format: "%.2f", average))
+                    print("The class average is: " + String(format: "%.2f", average))
                 case "9":
                     menuRunning = false
                 default:
@@ -72,11 +98,6 @@ func showAllGradesOfAllStudents(){
         // connect the grades element with the comma
         let gradesString = studentGrades[i][1...].map{$0}.joined(separator: ", ") // map is pulling each element out and joined with each other with comma
         print(gradesString)
-    }
-}
-func calculateGradeOfEachStudent(){
-    for i in studentGrades.indices{
-        studentsWithGrades[studentGrades[i][0]]
     }
 }
 showMainMenu()
