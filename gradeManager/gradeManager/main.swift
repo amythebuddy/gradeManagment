@@ -14,9 +14,9 @@ var studentGrades: [[String]] = []
 var sumOfClass = 0.0
 var sumToCalculateAverage = 0.0
 var average = 0.0
-var studentsWithGrades = [String : Double]()
+var studentsWithAverageGrades = [String : Double]()
 var sumOfEachStudent = 0.0
-
+var averageOfSingleStudent = 0.0
 
 do {
     let stream = InputStream(fileAtPath: "/Users/nguyenhuyen/Desktop/grades.csv")
@@ -29,19 +29,21 @@ do {
 } catch {
     print("There is a error trying read the files. Check if the file path is correct")
 }
-func calculateGradeOfEachStudent(){
-    for i in studentGrades.indices {
-        for j in 1..<studentGrades[i].count{
-            if let gradeOfEachAssignment = Double(studentGrades[i][j]){
-                sumOfEachStudent += gradeOfEachAssignment
-            }
+//MARK: average grade of each student
+// calculate grade of each student
+for i in studentGrades.indices {
+    for j in 1..<studentGrades[i].count{
+        if let gradeOfEachAssignment = Double(studentGrades[i][j]){
+            sumOfEachStudent += gradeOfEachAssignment //add all of the assigments
         }
-        var averageOfSingleStudent = sumOfEachStudent / 10
-        studentsWithGrades[studentGrades[i][0]] = averageOfSingleStudent
     }
+    averageOfSingleStudent = sumOfEachStudent / 10 // divide to the amount of assignment
+    studentsWithAverageGrades[studentGrades[i][0]] = averageOfSingleStudent
+    sumOfEachStudent = 0.0
 }
+print(studentsWithAverageGrades)
 func findStudent(byName name : String) -> [String]? {
-    let lowercaseName = name.lowercased()
+    let lowercaseName = name.lowercased() //turn all name to lowercase
     for student in studentGrades {
         if let foundedStudent = student.firstIndex(where: {$0.lowercased() == lowercaseName}) {
             return student
@@ -67,24 +69,27 @@ func showMainMenu(){
             switch userInput{
                 case "1", "2":
                     print("Which student would you like to choose?")
-                    if let nameInput = readLine(), let studentName = findStudent(byName: nameInput){
-                        
+                    if let nameInput = readLine(), let studentName = findStudent(byName: nameInput) {
+                        print("\(studentName[0])'s grades is/are:", terminator: " ")
+                        if userInput == "1" {
+                            print("\(studentsWithAverageGrades[studentName[0]]!)")
+                        } else {
+                            showAllGradesOfAStudent(studentName)
+                        }
+                    } else {
+                            print("There is no student with that name.")
                     }
                 case "3":
                     showAllGradesOfAllStudents()
                 case "4":
-                    for i in studentGrades.indices{
-                        for j in 1..<studentGrades[i].count{
-                            if let gradeOfEachAssignment = Double(studentGrades[i][j]){
-                                sumOfClass += gradeOfEachAssignment
-                            }
-                            sumToCalculateAverage += 1
-                        }
-                    }
-                    average = sumOfClass / sumToCalculateAverage
-                    print("The class average is: " + String(format: "%.2f", average))
+                    calculateAverageGradeOfTheClass()
+                case "6":
+                    findLowestGrade()
+                case "7":
+                    findHighestGrade()
                 case "9":
                     menuRunning = false
+                    print("Have a great rest of your day!")
                 default:
                     print("Please enter an appropriate choice!")
             }
@@ -99,5 +104,30 @@ func showAllGradesOfAllStudents(){
         let gradesString = studentGrades[i][1...].map{$0}.joined(separator: ", ") // map is pulling each element out and joined with each other with comma
         print(gradesString)
     }
+}
+func showAllGradesOfAStudent(_ student: [String]){
+    //dropFirst means remove the first element without changing the original array
+    let gradesString = student.dropFirst().joined(separator: ", ")
+    print(gradesString)
+}
+func calculateAverageGradeOfTheClass() {
+    for i in studentGrades.indices{
+        for j in 1..<studentGrades[i].count{
+            if let gradeOfEachAssignment = Double(studentGrades[i][j]){
+                sumOfClass += gradeOfEachAssignment
+            }
+            sumToCalculateAverage += 1
+        }
+    }
+    average = sumOfClass / sumToCalculateAverage
+    print("The class average is: " + String(format: "%.2f", average))
+}
+func findHighestGrade(){
+    let highestGrade = studentsWithAverageGrades.max{$0.value < $1.value}
+    print("\(highestGrade!.key) is the student with the highest grade: \(highestGrade!.value)")
+}
+func findLowestGrade(){
+    let lowestGrade = studentsWithAverageGrades.min{$0.value < $1.value}
+    print("\(lowestGrade!.key) is the student with the lowest grade: \(lowestGrade!.value)")
 }
 showMainMenu()
