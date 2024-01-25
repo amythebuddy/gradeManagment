@@ -27,6 +27,7 @@
 		0610A2372B60B2DD00B4B64C /* grades.csv */ = {isa = PBXFileReference; lastKnownFileType = text; name = grades.csv; path = ../../../grades.csv; sourceTree = "<group>"; };
 		337B5DF42B5EE1450052CDD9 /* gradeManager */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = gradeManager; sourceTree = BUILT_PRODUCTS_DIR; };
 		337B5DF72B5EE1450052CDD9 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		33DF515B2B62BB3C0047DC6D /* grades.csv */ = {isa = PBXFileReference; lastKnownFileType = text; name = grades.csv; path = ../../../../grades.csv; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +62,7 @@
 			isa = PBXGroup;
 			children = (
 				337B5DF72B5EE1450052CDD9 /* main.swift */,
+				33DF515B2B62BB3C0047DC6D /* grades.csv */,
 				0610A2372B60B2DD00B4B64C /* grades.csv */,
 			);
 			path = gradeManager;

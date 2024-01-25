@@ -8,18 +8,20 @@
 import Foundation
 import CSV
 
-//variable declaration
+//MARK: variable declaration
 var menuRunning = true
 var studentGrades: [[String]] = []
 var sumOfClass = 0.0
-var sumToCalculateAverage = 0.0
+var totalAssignment = 0.0
 var average = 0.0
 var studentsWithAverageGrades = [String : Double]()
 var sumOfEachStudent = 0.0
 var averageOfSingleStudent = 0.0
+var sumOfAssignmentGrades = 0.0
+var sumOfAmountOfThatAssignment = 0.0
 
 do {
-    let stream = InputStream(fileAtPath: "/Users/nguyenhuyen/Desktop/grades.csv")
+    let stream = InputStream(fileAtPath: "/Users/studentam/Desktop/grades.csv")
     
     let csv = try CSVReader(stream: stream!)
     
@@ -34,14 +36,14 @@ do {
 for i in studentGrades.indices {
     for j in 1..<studentGrades[i].count{
         if let gradeOfEachAssignment = Double(studentGrades[i][j]){
-            sumOfEachStudent += gradeOfEachAssignment //add all of the assigments
+            sumOfEachStudent += gradeOfEachAssignment //add all of the assigments grade
         }
     }
-    averageOfSingleStudent = sumOfEachStudent / 10 // divide to the amount of assignment
+    averageOfSingleStudent = sumOfEachStudent / 10 // divide to the amount of assignments
     studentsWithAverageGrades[studentGrades[i][0]] = averageOfSingleStudent
     sumOfEachStudent = 0.0
 }
-print(studentsWithAverageGrades)
+
 func findStudent(byName name : String) -> [String]? {
     let lowercaseName = name.lowercased() //turn all name to lowercase
     for student in studentGrades {
@@ -63,16 +65,17 @@ func showMainMenu(){
               + "6. Find the lowest grade in the class \n"
               + "7. Find the highest grade of the class\n"
               + "8. Filter students by grade range\n"
-              + "9. Quit")
+              + "9. Change grade of an assignment\n"
+              + "10. Quit")
         
         if let userInput = readLine() {
             switch userInput{
                 case "1", "2":
                     print("Which student would you like to choose?")
                     if let nameInput = readLine(), let studentName = findStudent(byName: nameInput) {
-                        print("\(studentName[0])'s grades is/are:", terminator: " ")
+                        print("\(studentName[0])'s grade(s) is/are:", terminator: " ")
                         if userInput == "1" {
-                            print("\(studentsWithAverageGrades[studentName[0]]!)")
+                            print("\(studentsWithAverageGrades[studentName[0]]!)") //get the grade of that student
                         } else {
                             showAllGradesOfAStudent(studentName)
                         }
@@ -83,13 +86,19 @@ func showMainMenu(){
                     showAllGradesOfAllStudents()
                 case "4":
                     calculateAverageGradeOfTheClass()
+                case "5":
+                    findAverageGradeOfAssignment()
                 case "6":
                     findLowestGrade()
                 case "7":
                     findHighestGrade()
+                case "8":
+                    filterStudentByGradeRange()
                 case "9":
-                    menuRunning = false
+                    changeGradeOfAssignment()
+                case "10":
                     print("Have a great rest of your day!")
+                    menuRunning = false
                 default:
                     print("Please enter an appropriate choice!")
             }
@@ -100,8 +109,8 @@ func showAllGradesOfAllStudents(){
     for i in studentGrades.indices{
         // terminator is to connect the second print to this line
         print("\(studentGrades[i][0]) grades are:", terminator: " ")
-        // connect the grades element with the comma
-        let gradesString = studentGrades[i][1...].map{$0}.joined(separator: ", ") // map is pulling each element out and joined with each other with comma
+        // map is pulling each element out and joined with each other with comma
+        let gradesString = studentGrades[i][1...].map{$0}.joined(separator: ", ")
         print(gradesString)
     }
 }
@@ -114,12 +123,13 @@ func calculateAverageGradeOfTheClass() {
     for i in studentGrades.indices{
         for j in 1..<studentGrades[i].count{
             if let gradeOfEachAssignment = Double(studentGrades[i][j]){
+                // add each assignment grade to the sum
                 sumOfClass += gradeOfEachAssignment
             }
-            sumToCalculateAverage += 1
+            totalAssignment += 1 // add the amount of assignment
         }
     }
-    average = sumOfClass / sumToCalculateAverage
+    average = sumOfClass / totalAssignment
     print("The class average is: " + String(format: "%.2f", average))
 }
 func findHighestGrade(){
@@ -129,5 +139,59 @@ func findHighestGrade(){
 func findLowestGrade(){
     let lowestGrade = studentsWithAverageGrades.min{$0.value < $1.value}
     print("\(lowestGrade!.key) is the student with the lowest grade: \(lowestGrade!.value)")
+}
+func findAverageGradeOfAssignment(){
+    print("Which assignent would you like to get the average of (1-10):")
+    guard let number = readLine(), let assignmentNumber = Int(number), assignmentNumber > 0, assignmentNumber < 11 else {
+        print("Please enter a number from 1 to 10")
+        return
+    }
+    for i in studentGrades.indices{
+        if let gradeOfEachAssignment = Double(studentGrades[i][assignmentNumber]){ // get that assignment grade
+            sumOfAssignmentGrades += gradeOfEachAssignment // add each assignment grade to the sum
+            sumOfAmountOfThatAssignment += 1 // add an amount of assignment
+        }
+    }
+    var averageOfAnAssignment = sumOfAssignmentGrades / sumOfAmountOfThatAssignment
+    print("The average for assignment #\(assignmentNumber) is: " + String(format: "%.2f", averageOfAnAssignment))
+}
+func filterStudentByGradeRange(){
+    print("Enter the low range you would like to use: ")
+    guard let lowNumber = readLine(), let lowGrade = Double(lowNumber) else {
+        return
+    }
+    print("Enter the high range you would like to use: ")
+    guard let highNumber = readLine(), let highGrade = Double(highNumber) else {
+        return
+    }
+    if lowGrade > highGrade {
+        print("The low range is bigger than the high range. Please enter back.")
+    } else {
+        //filter the grade that is higher than lowGrade and lower than highGrade
+        // return back a dictionary of students with in range grade
+        var studentsInRange = studentsWithAverageGrades.filter({$0.value > lowGrade && $0.value < highGrade})
+        for student in studentsInRange { // for each student in range, print out their name and grade
+            print("\(student.key): \(student.value)")
+        }
+    }
+}
+func changeGradeOfAssignment(){
+    print("What student do you want to change?")
+    guard let nameInput = readLine(), var studentName = findStudent(byName: nameInput) else {
+        print("There is no student with that name")
+        return
+    }
+    print("Which assignent grade would you like to change (1-10):")
+    guard let number = readLine(), let assignmentNumber = Int(number), assignmentNumber > 0, assignmentNumber < 11 else {
+        print("Please enter a number from 1 to 10")
+        return
+    }
+    print("What is the new grade of this student?")
+    guard let grade = readLine(), let newGrade = Double(grade), newGrade > 0 else {
+        print("Enter a postive number")
+        return
+    }
+//    studentGrades[studentName[assignmentNumber]] = grade
+    print(studentName)
 }
 showMainMenu()
