@@ -9,45 +9,48 @@ import Foundation
 import CSV
 
 //MARK: variable declaration
-var studentGrades: [[String]] = []
+
 var studentsWithAverageGrades = [String : Double]()
 
-do {
-    let stream = InputStream(fileAtPath: "/Users/studentam/Desktop/grades.csv")
-    
-    let csv = try CSVReader(stream: stream!)
-    while let row = csv.next(){
-        studentGrades.append(row)
+func readCSVFiles() -> [[String]]{
+    do {
+        let stream = InputStream(fileAtPath: "/Users/studentam/Desktop/grades.csv")
+        var studentGrades: [[String]] = []
+        let csv = try CSVReader(stream: stream!)
+        while let row = csv.next(){
+            studentGrades.append(row)
+        }
+        return studentGrades
+    } catch {
+        print("There is a error trying read the files. Check if the file path is correct")
     }
-} catch {
-    print("There is a error trying read the files. Check if the file path is correct")
+    return [[]]
 }
-
 // calculate grade of each student
-func calculateGradeOfEachStudent(){
+func calculateGradeOfEachStudent(data: [[String]]){
     var sumOfEachStudent = 0.0
     var averageOfSingleStudent = 0.0
-    for i in studentGrades.indices {
-        for j in 1..<studentGrades[i].count{
-            if let gradeOfEachAssignment = Double(studentGrades[i][j]){
+    for i in data.indices {
+        for j in 1..<data[i].count{
+            if let gradeOfEachAssignment = Double(data[i][j]){
                 sumOfEachStudent += gradeOfEachAssignment //add all of the assigments grade
             }
         }
-        averageOfSingleStudent = sumOfEachStudent / Double((studentGrades[i].count - 1)) // divide to the amount of assignments
-        studentsWithAverageGrades[studentGrades[i][0]] = averageOfSingleStudent
+        averageOfSingleStudent = sumOfEachStudent / Double((data[i].count - 1)) // divide to the amount of assignments
+        studentsWithAverageGrades[data[i][0]] = averageOfSingleStudent
         sumOfEachStudent = 0.0
     }
 }
-func findStudent(byName name : String) -> [String]? {
+func findStudent(byName name : String, accessThrough data: [[String]]) -> [String]? {
     let lowercaseName = name.lowercased() //turn all name to lowercase
-    for student in studentGrades {
+    for student in data {
         if student.firstIndex(where: {$0.lowercased() == lowercaseName}) != nil {
             return student
         }
     }
     return nil
 }
-calculateGradeOfEachStudent()
+calculateGradeOfEachStudent(data: readCSVFiles())
 func showMainMenu(){
     var menuRunning = true
     while menuRunning {
@@ -68,7 +71,7 @@ func showMainMenu(){
             switch userInput{
                 case "1", "2":
                     print("Which student would you like to choose?")
-                    if let nameInput = readLine(), let studentName = findStudent(byName: nameInput) {
+                    if let nameInput = readLine(), let studentName = findStudent(byName: nameInput, accessThrough: readCSVFiles()) {
                         print("\(studentName[0])'s grade(s) is/are:", terminator: " ")
                         if userInput == "1" {
                             print("\(studentsWithAverageGrades[studentName[0]]!)") //get the grade of that student
@@ -79,11 +82,11 @@ func showMainMenu(){
                             print("There is no student with that name.")
                     }
                 case "3":
-                    showAllGradesOfAllStudents()
+                    showAllGradesOfAll(students: readCSVFiles())
                 case "4":
-                    calculateAverageGradeOfTheClass()
+                    calculateAverageGradeOfTheClass(with: readCSVFiles())
                 case "5":
-                    findAverageGradeOfAssignment()
+                    findAverageGradeOfAssignment(with: readCSVFiles())
                 case "6":
                     findLowestGrade()
                 case "7":
@@ -91,7 +94,7 @@ func showMainMenu(){
                 case "8":
                     filterStudentByGradeRange()
                 case "9":
-                    changeGradeOfAssignment()
+                    changeGradeOfAssignment(accessData: readCSVFiles())
                 case "10":
                     print("Have a great rest of your day!")
                     menuRunning = false
@@ -101,12 +104,12 @@ func showMainMenu(){
         }
     }
 }
-func showAllGradesOfAllStudents(){
-    for i in studentGrades.indices{
+func showAllGradesOfAll(students: [[String]]){
+    for i in students.indices{
         // terminator is to connect the second print to this line
-        print("\(studentGrades[i][0]) grades are:", terminator: " ")
+        print("\(students[i][0]) grades are:", terminator: " ")
         // map is pulling each element out and joined with each other with comma
-        let gradesString = studentGrades[i][1...].map{$0}.joined(separator: ", ")
+        let gradesString = students[i][1...].map{$0}.joined(separator: ", ")
         print(gradesString)
     }
 }
@@ -115,13 +118,13 @@ func showAllGradesOfAStudent(_ student: [String]){
     let gradesString = student.dropFirst().joined(separator: ", ")
     print(gradesString)
 }
-func calculateAverageGradeOfTheClass() {
+func calculateAverageGradeOfTheClass(with data: [[String]]) {
     var average = 0.0
     var sumOfClass = 0.0
     var totalAssignment = 0.0
-    for i in studentGrades.indices{
-        for j in 1..<studentGrades[i].count{
-            if let gradeOfEachAssignment = Double(studentGrades[i][j]){
+    for i in data.indices{
+        for j in 1..<data[i].count{
+            if let gradeOfEachAssignment = Double(data[i][j]){
                 // add each assignment grade to the sum
                 sumOfClass += gradeOfEachAssignment
             }
@@ -139,7 +142,7 @@ func findLowestGrade(){
     let lowestGrade = studentsWithAverageGrades.min{$0.value < $1.value}
     print("\(lowestGrade!.key) is the student with the lowest grade: \(lowestGrade!.value)")
 }
-func findAverageGradeOfAssignment(){
+func findAverageGradeOfAssignment(with data: [[String]]){
     print("Which assignent would you like to get the average of (1-10):")
     guard let number = readLine(), let assignmentNumber = Int(number), assignmentNumber > 0, assignmentNumber < 11 else {
         print("Please enter a number from 1 to 10")
@@ -147,8 +150,8 @@ func findAverageGradeOfAssignment(){
     }
     var sumOfAssignmentGrades = 0.0
     var sumOfAmountOfThatAssignment = 0.0
-    for i in studentGrades.indices{
-        if let gradeOfEachAssignment = Double(studentGrades[i][assignmentNumber]){ // get that assignment grade
+    for i in data.indices{
+        if let gradeOfEachAssignment = Double(data[i][assignmentNumber]){ // get that assignment grade
             sumOfAssignmentGrades += gradeOfEachAssignment // add each assignment grade to the sum
             sumOfAmountOfThatAssignment += 1 // add an amount of assignment
         }
@@ -176,9 +179,9 @@ func filterStudentByGradeRange(){
         }
     }
 }
-func changeGradeOfAssignment(){
+func changeGradeOfAssignment(accessData data: [[String]]){
     print("What student do you want to change?")
-    guard let nameInput = readLine(), var studentName = findStudent(byName: nameInput) else {
+    guard let nameInput = readLine(), var studentName = findStudent(byName: nameInput, accessThrough: readCSVFiles()) else {
         print("There is no student with that name")
         return
     }
@@ -193,12 +196,12 @@ func changeGradeOfAssignment(){
         return
     }
     studentName[assignmentNumber] = grade // change the assignment grade
-    for i in studentGrades.indices { // for each student
-        if studentGrades[i][0] == studentName[0]{ //if spotted the student in studentGrades
-            studentGrades[i] = studentName // change the whole array of grades
+    for i in data.indices { // for each student
+        if data[i][0] == studentName[0]{ //if spotted the student in studentGrades
+//            data[i] = studentName // change the whole array of grades
         }
     }
-    calculateGradeOfEachStudent()
+    calculateGradeOfEachStudent(data: readCSVFiles())
     print("You have changed \(studentName[0])'s grades of assingment #\(assignmentNumber)")
 }
 showMainMenu()
