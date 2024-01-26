@@ -9,51 +9,47 @@ import Foundation
 import CSV
 
 //MARK: variable declaration
-var menuRunning = true
 var studentGrades: [[String]] = []
-var sumOfClass = 0.0
-var totalAssignment = 0.0
-var average = 0.0
 var studentsWithAverageGrades = [String : Double]()
-var sumOfEachStudent = 0.0
-var averageOfSingleStudent = 0.0
-var sumOfAssignmentGrades = 0.0
-var sumOfAmountOfThatAssignment = 0.0
 
 do {
     let stream = InputStream(fileAtPath: "/Users/studentam/Desktop/grades.csv")
     
     let csv = try CSVReader(stream: stream!)
-    
     while let row = csv.next(){
         studentGrades.append(row)
     }
 } catch {
     print("There is a error trying read the files. Check if the file path is correct")
 }
-//MARK: average grade of each student
-// calculate grade of each student
-for i in studentGrades.indices {
-    for j in 1..<studentGrades[i].count{
-        if let gradeOfEachAssignment = Double(studentGrades[i][j]){
-            sumOfEachStudent += gradeOfEachAssignment //add all of the assigments grade
-        }
-    }
-    averageOfSingleStudent = sumOfEachStudent / 10 // divide to the amount of assignments
-    studentsWithAverageGrades[studentGrades[i][0]] = averageOfSingleStudent
-    sumOfEachStudent = 0.0
-}
 
+// calculate grade of each student
+func calculateGradeOfEachStudent(){
+    var sumOfEachStudent = 0.0
+    var averageOfSingleStudent = 0.0
+    for i in studentGrades.indices {
+        for j in 1..<studentGrades[i].count{
+            if let gradeOfEachAssignment = Double(studentGrades[i][j]){
+                sumOfEachStudent += gradeOfEachAssignment //add all of the assigments grade
+            }
+        }
+        averageOfSingleStudent = sumOfEachStudent / Double((studentGrades[i].count - 1)) // divide to the amount of assignments
+        studentsWithAverageGrades[studentGrades[i][0]] = averageOfSingleStudent
+        sumOfEachStudent = 0.0
+    }
+}
 func findStudent(byName name : String) -> [String]? {
     let lowercaseName = name.lowercased() //turn all name to lowercase
     for student in studentGrades {
-        if let foundedStudent = student.firstIndex(where: {$0.lowercased() == lowercaseName}) {
+        if student.firstIndex(where: {$0.lowercased() == lowercaseName}) != nil {
             return student
         }
     }
     return nil
 }
+calculateGradeOfEachStudent()
 func showMainMenu(){
+    var menuRunning = true
     while menuRunning {
         print("Welcome to the Grade Manager!\n"
               + "What would you like to do? (Enter the number):\n"
@@ -120,6 +116,9 @@ func showAllGradesOfAStudent(_ student: [String]){
     print(gradesString)
 }
 func calculateAverageGradeOfTheClass() {
+    var average = 0.0
+    var sumOfClass = 0.0
+    var totalAssignment = 0.0
     for i in studentGrades.indices{
         for j in 1..<studentGrades[i].count{
             if let gradeOfEachAssignment = Double(studentGrades[i][j]){
@@ -146,13 +145,15 @@ func findAverageGradeOfAssignment(){
         print("Please enter a number from 1 to 10")
         return
     }
+    var sumOfAssignmentGrades = 0.0
+    var sumOfAmountOfThatAssignment = 0.0
     for i in studentGrades.indices{
         if let gradeOfEachAssignment = Double(studentGrades[i][assignmentNumber]){ // get that assignment grade
             sumOfAssignmentGrades += gradeOfEachAssignment // add each assignment grade to the sum
             sumOfAmountOfThatAssignment += 1 // add an amount of assignment
         }
     }
-    var averageOfAnAssignment = sumOfAssignmentGrades / sumOfAmountOfThatAssignment
+    let averageOfAnAssignment = sumOfAssignmentGrades / sumOfAmountOfThatAssignment
     print("The average for assignment #\(assignmentNumber) is: " + String(format: "%.2f", averageOfAnAssignment))
 }
 func filterStudentByGradeRange(){
@@ -169,7 +170,7 @@ func filterStudentByGradeRange(){
     } else {
         //filter the grade that is higher than lowGrade and lower than highGrade
         // return back a dictionary of students with in range grade
-        var studentsInRange = studentsWithAverageGrades.filter({$0.value > lowGrade && $0.value < highGrade})
+        let studentsInRange = studentsWithAverageGrades.filter({$0.value > lowGrade && $0.value < highGrade})
         for student in studentsInRange { // for each student in range, print out their name and grade
             print("\(student.key): \(student.value)")
         }
@@ -188,10 +189,16 @@ func changeGradeOfAssignment(){
     }
     print("What is the new grade of this student?")
     guard let grade = readLine(), let newGrade = Double(grade), newGrade > 0 else {
-        print("Enter a postive number")
+        print("Please enter a postive number.")
         return
     }
-//    studentGrades[studentName[assignmentNumber]] = grade
-    print(studentName)
+    studentName[assignmentNumber] = grade // change the assignment grade
+    for i in studentGrades.indices { // for each student
+        if studentGrades[i][0] == studentName[0]{ //if spotted the student in studentGrades
+            studentGrades[i] = studentName // change the whole array of grades
+        }
+    }
+    calculateGradeOfEachStudent()
+    print("You have changed \(studentName[0])'s grades of assingment #\(assignmentNumber)")
 }
 showMainMenu()
