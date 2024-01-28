@@ -8,38 +8,34 @@
 import Foundation
 import CSV
 
-//MARK: variable declaration
-
-var studentsWithAverageGrades = [String : Double]()
-
-func readCSVFiles() -> [[String]]{
+func readCSVFiles(data: inout [[String]]) { // inout allows changes for data
     do {
-        let stream = InputStream(fileAtPath: "/Users/studentam/Desktop/grades.csv")
-        var studentGrades: [[String]] = []
+        let stream = InputStream(fileAtPath: "/Users/nguyenhuyen/Desktop/grades.csv")
+        data = []
         let csv = try CSVReader(stream: stream!)
         while let row = csv.next(){
-            studentGrades.append(row)
+            data.append(row)
         }
-        return studentGrades
     } catch {
-        print("There is a error trying read the files. Check if the file path is correct")
+        print("There is an error trying to read the files. Check if the file path is correct.")
     }
-    return [[]]
 }
+
 // calculate grade of each student
-func calculateGradeOfEachStudent(data: [[String]]){
+func calculateGradeOfEachStudent(through data: [[String]]) -> [String : Double]{
+    var studentsWithAverageGrades = [String : Double]()
     var sumOfEachStudent = 0.0
-    var averageOfSingleStudent = 0.0
     for i in data.indices {
         for j in 1..<data[i].count{
             if let gradeOfEachAssignment = Double(data[i][j]){
                 sumOfEachStudent += gradeOfEachAssignment //add all of the assigments grade
             }
         }
-        averageOfSingleStudent = sumOfEachStudent / Double((data[i].count - 1)) // divide to the amount of assignments
+        let averageOfSingleStudent = sumOfEachStudent / Double((data[i].count - 1)) // divide to the amount of assignments
         studentsWithAverageGrades[data[i][0]] = averageOfSingleStudent
         sumOfEachStudent = 0.0
     }
+    return studentsWithAverageGrades
 }
 func findStudent(byName name : String, accessThrough data: [[String]]) -> [String]? {
     let lowercaseName = name.lowercased() //turn all name to lowercase
@@ -50,9 +46,11 @@ func findStudent(byName name : String, accessThrough data: [[String]]) -> [Strin
     }
     return nil
 }
-calculateGradeOfEachStudent(data: readCSVFiles())
 func showMainMenu(){
+    var studentGrades: [[String]] = []
     var menuRunning = true
+    var studentsWithAverageGrades = calculateGradeOfEachStudent(through: studentGrades)
+    readCSVFiles(data: &studentGrades)
     while menuRunning {
         print("Welcome to the Grade Manager!\n"
               + "What would you like to do? (Enter the number):\n"
@@ -69,37 +67,82 @@ func showMainMenu(){
         
         if let userInput = readLine() {
             switch userInput{
-                case "1", "2":
-                    print("Which student would you like to choose?")
-                    if let nameInput = readLine(), let studentName = findStudent(byName: nameInput, accessThrough: readCSVFiles()) {
-                        print("\(studentName[0])'s grade(s) is/are:", terminator: " ")
-                        if userInput == "1" {
-                            print("\(studentsWithAverageGrades[studentName[0]]!)") //get the grade of that student
-                        } else {
-                            showAllGradesOfAStudent(studentName)
-                        }
+            case "1", "2":
+                print("Which student would you like to choose?")
+                if let nameInput = readLine(), let studentName = findStudent(byName: nameInput, accessThrough: studentGrades) {
+                    print("\(studentName[0])'s grade(s) is/are:", terminator: " ")
+                    if userInput == "1" {
+                        print("\(studentsWithAverageGrades[studentName[0]]!)") //get the grade of that student
                     } else {
-                            print("There is no student with that name.")
+                        showAllGradesOfAStudent(studentName)
                     }
-                case "3":
-                    showAllGradesOfAll(students: readCSVFiles())
-                case "4":
-                    calculateAverageGradeOfTheClass(with: readCSVFiles())
-                case "5":
-                    findAverageGradeOfAssignment(with: readCSVFiles())
-                case "6":
-                    findLowestGrade()
-                case "7":
-                    findHighestGrade()
-                case "8":
-                    filterStudentByGradeRange()
+                } else {
+                    print("There is no student with that name.")
+                    continue
+                }
+            case "3":
+                showAllGradesOfAll(students: studentGrades)
+            case "4":
+                calculateAverageGradeOfTheClass(with: studentGrades)
+            case "5":
+                findAverageGradeOfAssignment(with: studentGrades)
+            case "6", "7":
+                if userInput == "7" {
+                    let highestGrade = studentsWithAverageGrades.max{$0.value < $1.value}
+                    print("\(highestGrade!.key) is the student with the highest grade: \(highestGrade!.value)")
+                } else {
+                    let lowestGrade = studentsWithAverageGrades.min{$0.value < $1.value}
+                    print("\(lowestGrade!.key) is the student with the lowest grade: \(lowestGrade!.value)")
+                }
+                case "8": // filter students by grade range
+                print("Enter the low range you would like to use: ")
+                guard let lowNumber = readLine(), let lowGrade = Double(lowNumber) else {
+                    print("Please enter a number!")
+                    continue
+                }
+                print("Enter the high range you would like to use: ")
+                guard let highNumber = readLine(), let highGrade = Double(highNumber) else {
+                    print("Please enter a number!")
+                    continue
+                }
+                if lowGrade > highGrade {
+                    print("The low range is bigger than the high range. Please enter back.")
+                } else {
+                    //filter the grade that is higher than lowGrade and lower than highGrade
+                    // return back a dictionary of students with in range grade
+                    let studentsInRange = studentsWithAverageGrades.filter({$0.value > lowGrade && $0.value < highGrade})
+                    for student in studentsInRange { // for each student in range, print out their name and grade
+                        print("\(student.key): \(student.value)")
+                    }
+                }
                 case "9":
-                    changeGradeOfAssignment(accessData: readCSVFiles())
+                    print("What student do you want to change?")
+                    guard let nameInput = readLine(), var studentName = findStudent(byName: nameInput, accessThrough: studentGrades) else {
+                        print("There is no student with that name")
+                        continue
+                    }
+                    print("Which assignent grade would you like to change (1-10):")
+                    guard let number = readLine(), let assignmentNumber = Int(number), assignmentNumber > 0, assignmentNumber < 11 else {
+                        print("Please enter a number from 1 to 10")
+                        continue
+                    }
+                    print("What is the new grade of this student?")
+                    guard let grade = readLine(), let newGrade = Double(grade), newGrade > 0.0 else {
+                        print("Please enter a postive number.")
+                        continue
+                    }
+                    studentName[assignmentNumber] = grade // change the assignment grade
+                    if let index = studentGrades.firstIndex(where: { $0[0] == studentName[0] }) { //if spotted the student in studentGrades
+                        studentGrades[index] = studentName // change the whole array of grades
+                    }
+                    let newGradeOfStudent = calculateGradeOfEachStudent(through: studentGrades) // recalculate the grade after changes
+                    studentsWithAverageGrades = newGradeOfStudent // change the average grades
+                    print("You have changed \(studentName[0])'s grades of assingment #\(assignmentNumber)")
                 case "10":
                     print("Have a great rest of your day!")
                     menuRunning = false
                 default:
-                    print("Please enter an appropriate choice!")
+                    print("Please enter an appropriate choice!") // if the user enter something outside from 1 to 10
             }
         }
     }
@@ -134,14 +177,6 @@ func calculateAverageGradeOfTheClass(with data: [[String]]) {
     average = sumOfClass / totalAssignment
     print("The class average is: " + String(format: "%.2f", average))
 }
-func findHighestGrade(){
-    let highestGrade = studentsWithAverageGrades.max{$0.value < $1.value}
-    print("\(highestGrade!.key) is the student with the highest grade: \(highestGrade!.value)")
-}
-func findLowestGrade(){
-    let lowestGrade = studentsWithAverageGrades.min{$0.value < $1.value}
-    print("\(lowestGrade!.key) is the student with the lowest grade: \(lowestGrade!.value)")
-}
 func findAverageGradeOfAssignment(with data: [[String]]){
     print("Which assignent would you like to get the average of (1-10):")
     guard let number = readLine(), let assignmentNumber = Int(number), assignmentNumber > 0, assignmentNumber < 11 else {
@@ -158,50 +193,5 @@ func findAverageGradeOfAssignment(with data: [[String]]){
     }
     let averageOfAnAssignment = sumOfAssignmentGrades / sumOfAmountOfThatAssignment
     print("The average for assignment #\(assignmentNumber) is: " + String(format: "%.2f", averageOfAnAssignment))
-}
-func filterStudentByGradeRange(){
-    print("Enter the low range you would like to use: ")
-    guard let lowNumber = readLine(), let lowGrade = Double(lowNumber) else {
-        return
-    }
-    print("Enter the high range you would like to use: ")
-    guard let highNumber = readLine(), let highGrade = Double(highNumber) else {
-        return
-    }
-    if lowGrade > highGrade {
-        print("The low range is bigger than the high range. Please enter back.")
-    } else {
-        //filter the grade that is higher than lowGrade and lower than highGrade
-        // return back a dictionary of students with in range grade
-        let studentsInRange = studentsWithAverageGrades.filter({$0.value > lowGrade && $0.value < highGrade})
-        for student in studentsInRange { // for each student in range, print out their name and grade
-            print("\(student.key): \(student.value)")
-        }
-    }
-}
-func changeGradeOfAssignment(accessData data: [[String]]){
-    print("What student do you want to change?")
-    guard let nameInput = readLine(), var studentName = findStudent(byName: nameInput, accessThrough: readCSVFiles()) else {
-        print("There is no student with that name")
-        return
-    }
-    print("Which assignent grade would you like to change (1-10):")
-    guard let number = readLine(), let assignmentNumber = Int(number), assignmentNumber > 0, assignmentNumber < 11 else {
-        print("Please enter a number from 1 to 10")
-        return
-    }
-    print("What is the new grade of this student?")
-    guard let grade = readLine(), let newGrade = Double(grade), newGrade > 0 else {
-        print("Please enter a postive number.")
-        return
-    }
-    studentName[assignmentNumber] = grade // change the assignment grade
-    for i in data.indices { // for each student
-        if data[i][0] == studentName[0]{ //if spotted the student in studentGrades
-//            data[i] = studentName // change the whole array of grades
-        }
-    }
-    calculateGradeOfEachStudent(data: readCSVFiles())
-    print("You have changed \(studentName[0])'s grades of assingment #\(assignmentNumber)")
 }
 showMainMenu()
