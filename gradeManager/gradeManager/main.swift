@@ -10,14 +10,15 @@ import CSV
 
 func readCSVFiles(data: inout [[String]]) { // inout allows changes for data
     do {
-        let stream = InputStream(fileAtPath: "/Users/nguyenhuyen/Desktop/grades.csv")
+        let stream = InputStream(fileAtPath: "/Users/studentam/Desktop/grades.csv")
         data = []
         let csv = try CSVReader(stream: stream!)
         while let row = csv.next(){
             data.append(row)
         }
     } catch {
-        print("There is an error trying to read the files. Check if the file path is correct.")
+        print("An error occurred: \(error)")
+        fatalError("There is an error trying to read the files. Check if the file path is correct.")
     }
 }
 
