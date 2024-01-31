@@ -50,8 +50,8 @@ func findStudent(byName name : String, accessThrough data: [[String]]) -> [Strin
 func showMainMenu(){
     var studentGrades: [[String]] = []
     var menuRunning = true
-    var studentsWithAverageGrades = calculateGradeOfEachStudent(through: studentGrades)
     readCSVFiles(data: &studentGrades)
+    var studentsWithAverageGrades = calculateGradeOfEachStudent(through: studentGrades)
     while menuRunning {
         print("Welcome to the Grade Manager!\n"
               + "What would you like to do? (Enter the number):\n"
@@ -89,11 +89,17 @@ func showMainMenu(){
                 findAverageGradeOfAssignment(with: studentGrades)
             case "6", "7":
                 if userInput == "7" {
-                    let highestGrade = studentsWithAverageGrades.max{$0.value < $1.value}
-                    print("\(highestGrade!.key) is the student with the highest grade: \(highestGrade!.value)")
+                    if let highestGrade = studentsWithAverageGrades.max(by: {$0.value < $1.value}) {
+                        print("\(highestGrade.key) is the student with the highest grade: \(highestGrade.value)")
+                    } else {
+                        print("There is an error")
+                    }
                 } else {
-                    let lowestGrade = studentsWithAverageGrades.min{$0.value < $1.value}
-                    print("\(lowestGrade!.key) is the student with the lowest grade: \(lowestGrade!.value)")
+                    if let lowestGrade = studentsWithAverageGrades.min(by: {$0.value < $1.value}) {
+                        print("\(lowestGrade.key) is the student with the lowest grade: \(lowestGrade.value)")
+                    } else {
+                        print("There is an error")
+                    }
                 }
                 case "8": // filter students by grade range
                 print("Enter the low range you would like to use: ")
@@ -153,7 +159,7 @@ func showAllGradesOfAll(students: [[String]]){
         // terminator is to connect the second print to this line
         print("\(students[i][0]) grades are:", terminator: " ")
         // map is pulling each element out and joined with each other with comma
-        let gradesString = students[i][1...].map{$0}.joined(separator: ", ")
+        let gradesString = students[i][1...].joined(separator: ", ")
         print(gradesString)
     }
 }
