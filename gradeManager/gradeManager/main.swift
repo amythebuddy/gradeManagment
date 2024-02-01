@@ -171,7 +171,7 @@ func showAllGradesOfAStudent(_ student: [String]){
 func calculateAverageGradeOfTheClass(with data: [[String]]) {
     var average = 0.0
     var sumOfClass = 0.0
-    var totalAssignment = 0.0
+    var totalAssignment = 1.0
     for i in data.indices{
         for j in 1..<data[i].count{
             if let gradeOfEachAssignment = Double(data[i][j]){
